@@ -32,11 +32,6 @@ node_modules/
 __pycache__/
 *.pyc
 
-# Virtual environments
-venv/
-.venv/
-env/
-
 # Environment variables
 .env
 
