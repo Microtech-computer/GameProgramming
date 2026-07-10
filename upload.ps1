@@ -1,79 +1,91 @@
 # ============================================
-# GITHUB PROJECT UPLOAD SCRIPT (POWERSHELL)
-# ============================================
-# EDIT THESE VALUES BEFORE RUNNING
+# SMART GITHUB SYNC SCRIPT
+# Automatically uploads new files/folders
 # ============================================
 
+# -------- SETTINGS --------
 $PROJECT_PATH = "C:/GameProgramming"
 $GITHUB_USERNAME = "Microtech-computer"
 $REPOSITORY_NAME = "GameProgramming"
-$COMMIT_MESSAGE = "Initial commit"
 
-# ============================================
-# OPEN PROJECT DIRECTORY
-# ============================================
+# Commit message with current date/time
+$COMMIT_MESSAGE = "Auto update $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
 
-cd $PROJECT_PATH
+# -------- GO TO PROJECT --------
+Set-Location $PROJECT_PATH
 
-# ============================================
-# INITIALIZE GIT
-# ============================================
+# -------- INITIALIZE GIT IF NEEDED --------
+if (!(Test-Path ".git")) {
+    Write-Host "Initializing Git repository..."
+    git init
+    git branch -M main
+}
 
-git init
-
-# ============================================
-# CREATE .GITIGNORE
-# ============================================
+# -------- CREATE .GITIGNORE IF IT DOESN'T EXIST --------
+if (!(Test-Path ".gitignore")) {
 
 @'
+# Node
 node_modules/
+
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Environment variables
 .env
+
+# Build folders
 dist/
+build/
+
+# IDE
 .vscode/
+.idea/
+
+# Operating System
 .DS_Store
-'@ | Out-File -Encoding utf8 .gitignore
+Thumbs.db
+'@ | Out-File -Encoding utf8 ".gitignore"
 
-# ============================================
-# ADD PROJECT FILES
-# ============================================
+}
 
-git add .
+# -------- CONNECT REMOTE IF MISSING --------
+$REMOTE_EXISTS = git remote
 
-# ============================================
-# CREATE COMMIT
-# ============================================
+if ($REMOTE_EXISTS -notcontains "origin") {
+    git remote add origin "https://github.com/$GITHUB_USERNAME/$REPOSITORY_NAME.git"
+}
 
-git commit -m $COMMIT_MESSAGE
+# -------- STAGE EVERYTHING --------
+git add -A
 
-# ============================================
-# RENAME BRANCH TO MAIN
-# ============================================
+# -------- CHECK IF ANYTHING CHANGED --------
+$CHANGES = git status --porcelain
 
-git branch -M main
+if ($CHANGES) {
 
-# ============================================
-# CONNECT TO GITHUB REPOSITORY
-# ============================================
+    git commit -m $COMMIT_MESSAGE
 
-git remote remove origin 2>$null
+    git push -u origin main
 
-git remote add origin "https://github.com/Microtech-computer/GameProgramming.git"
+    Write-Host ""
+    Write-Host "====================================="
+    Write-Host "UPLOAD COMPLETED SUCCESSFULLY"
+    Write-Host "====================================="
+    Write-Host "Repository:"
+    Write-Host "https://github.com/$GITHUB_USERNAME/$REPOSITORY_NAME"
 
-# ============================================
-# PUSH TO GITHUB
-# ============================================
+}
+else {
 
-git push -u origin main
+    Write-Host ""
+    Write-Host "No changes detected."
+    Write-Host "Nothing to upload."
 
-# ============================================
-# FINISHED
-# ============================================
-
-Write-Host ""
-Write-Host "============================================"
-Write-Host "PROJECT SUCCESSFULLY UPLOADED TO GITHUB"
-Write-Host "============================================"
-Write-Host ""
-Write-Host "Repository URL:"
-Write-Host "https://github.com/Microtech-computer/GameProgramming.git"
-Write-Host ""
+}
